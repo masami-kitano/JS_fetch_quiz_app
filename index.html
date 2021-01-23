@@ -51,22 +51,17 @@
             getQuizData();
         });
 
-        const getQuizData = () => {
+        const getQuizData = async () => {
             quizTitle.textContent = '取得中です';
             quizContent.textContent = '少々お待ちください';
             startButton.hidden = true;
 
-            fetch(apiUrl)
-                .then((response) => {
-                    return response.json();
-                })
-                .then((data) => {
-                    gameState.quizzes = data.results;
-                    gameState.currentIndex = 0;
-                    gameState.score = 0;
-
-                    setNextQuiz();
-                });
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            gameState.quizzes = data.results;
+            gameState.currentIndex = 0;
+            gameState.score = 0;
+            setNextQuiz();
         };
 
         const setNextQuiz = () => {
