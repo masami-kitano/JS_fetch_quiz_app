@@ -33,11 +33,13 @@
     <script>
         const apiUrl = 'https://opentdb.com/api.php?amount=10';
 
-        const gameState = {
-            quizzes: [],
-            currentIndex: 0,
-            score: 0
-        };
+        class Quiz {
+            constructor(quizData) {
+                this.quizzes = quizData.results;
+                this.currentIndex = 0;
+                this.score = 0;
+            }
+        }
 
         const quizContainer = document.getElementById('quiz-container');
         const quizTitle = document.getElementById('quiz-title');
@@ -51,36 +53,35 @@
             getQuizData();
         });
 
-        const getQuizData = async () => {
+        const getQuizData = async() => {
             quizTitle.textContent = '取得中です';
             quizContent.textContent = '少々お待ちください';
             startButton.hidden = true;
 
             const response = await fetch(apiUrl);
-            const data = await response.json();
-            gameState.quizzes = data.results;
-            gameState.currentIndex = 0;
-            gameState.score = 0;
-            setNextQuiz();
+            const quizData = await response.json();
+            const quizInstance = new Quiz(quizData);
+
+            setNextQuiz(quizInstance);
         };
 
-        const setNextQuiz = () => {
+        const setNextQuiz = (quizInstance) => {
             quizTitle.textContent = '';
             quizCategory.textContent = '';
             quizDifficulty.textContent = '';
             quizContent.textContent = '';
             removeAnswers();
 
-            if (gameState.currentIndex < gameState.quizzes.length) {
-                const quiz = gameState.quizzes[gameState.currentIndex];
-                makeQuiz(quiz);
+            if (quizInstance.currentIndex < quizInstance.quizzes.length) {
+                const quiz = quizInstance.quizzes[quizInstance.currentIndex];
+                makeQuiz(quizInstance, quiz);
             } else {
-                finishQuiz();
+                finishQuiz(quizInstance);
             }
         };
 
-        const finishQuiz = () => {
-            quizTitle.textContent = `あなたの正解数${gameState.score}です！！`;
+        const finishQuiz = (quizInstance) => {
+            quizTitle.textContent = `あなたの正解数${quizInstance.score}です！！`;
             quizContent.textContent = `再度チャレンジしたい場合は以下をクリック！！`;
             const createTopButton = document.createElement('button');
             const returnTopButton = quizContainer.appendChild(createTopButton);
@@ -106,10 +107,10 @@
             }
         };
 
-        const makeQuiz = (quiz) => {
+        const makeQuiz = (quizInstance, quiz) => {
             const answers = makeAnswers(quiz);
 
-            quizTitle.textContent = `問題${gameState.currentIndex + 1}`;
+            quizTitle.textContent = `問題${quizInstance.currentIndex + 1}`;
             quizCategory.textContent = `【ジャンル】${unescapeHTML(quiz.category)}`;
             quizDifficulty.textContent = `【難易度】${quiz.difficulty}`;
             quizContent.textContent = unescapeHTML(quiz.question);
@@ -122,11 +123,11 @@
                 answerButtonItem.addEventListener('click', (event) => {
                     correctAnswer = unescapeHTML(quiz.correct_answer);
                     if (event.target.textContent === correctAnswer) {
-                        gameState.score++;
+                        quizInstance.score++;
                     }
 
-                    gameState.currentIndex++;
-                    setNextQuiz();
+                    quizInstance.currentIndex++;
+                    setNextQuiz(quizInstance);
                 });
             });
         };
