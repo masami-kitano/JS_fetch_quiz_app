@@ -36,8 +36,27 @@
         class Quiz {
             constructor(quizData) {
                 this.quizzes = quizData.results;
-                this.currentIndex = 0;
                 this.score = 0;
+            }
+
+            getCategory(index) {　　
+                return this.quizzes[index].category;　
+            }
+
+            getDifficulty(index) {　　
+                return this.quizzes[index].difficulty;　
+            }　
+
+            getQuestion(index) {　　
+                return this.quizzes[index].question;　
+            }
+
+            getCorrectAnswer(index) {
+                return this.quizzes[index].correct_answer;
+            }
+
+            getIncorrectAnswers(index) {
+                return this.quizzes[index].incorrect_answers;
             }
         }
 
@@ -50,10 +69,10 @@
         const startButton = document.getElementById('start-button');
 
         startButton.addEventListener('click', (event) => {
-            getQuizData();
+            getQuizData(0);
         });
 
-        const getQuizData = async() => {
+        const getQuizData = async(index) => {
             quizTitle.textContent = '取得中です';
             quizContent.textContent = '少々お待ちください';
             startButton.hidden = true;
@@ -62,19 +81,18 @@
             const quizData = await response.json();
             const quizInstance = new Quiz(quizData);
 
-            setNextQuiz(quizInstance);
+            setNextQuiz(quizInstance, index);
         };
 
-        const setNextQuiz = (quizInstance) => {
+        const setNextQuiz = (quizInstance, index) => {
             quizTitle.textContent = '';
             quizCategory.textContent = '';
             quizDifficulty.textContent = '';
             quizContent.textContent = '';
             removeAnswers();
 
-            if (quizInstance.currentIndex < quizInstance.quizzes.length) {
-                const quiz = quizInstance.quizzes[quizInstance.currentIndex];
-                makeQuiz(quizInstance, quiz);
+            if (index < quizInstance.quizzes.length) {
+                makeQuiz(quizInstance, index);
             } else {
                 finishQuiz(quizInstance);
             }
@@ -107,13 +125,13 @@
             }
         };
 
-        const makeQuiz = (quizInstance, quiz) => {
-            const answers = makeAnswers(quiz);
+        const makeQuiz = (quizInstance, index) => {
+            const answers = makeAnswers(quizInstance, index);
 
-            quizTitle.textContent = `問題${quizInstance.currentIndex + 1}`;
-            quizCategory.textContent = `【ジャンル】${unescapeHTML(quiz.category)}`;
-            quizDifficulty.textContent = `【難易度】${quiz.difficulty}`;
-            quizContent.textContent = unescapeHTML(quiz.question);
+            quizTitle.textContent = `問題${index + 1}`;
+            quizCategory.textContent = `【ジャンル】${unescapeHTML(quizInstance.getCategory(index))}`;
+            quizDifficulty.textContent = `【難易度】${quizInstance.getDifficulty(index)}`;
+            quizContent.textContent = unescapeHTML(quizInstance.getQuestion(index));
 
             answers.forEach((answer) => {
                 const answerListItem = document.createElement('li');
@@ -121,21 +139,21 @@
                 answerButtonItem.innerHTML = `<button>${unescapeHTML(answer)}</button>`;
 
                 answerButtonItem.addEventListener('click', (event) => {
-                    correctAnswer = unescapeHTML(quiz.correct_answer);
+                    correctAnswer = unescapeHTML(quizInstance.getCorrectAnswer(index));
                     if (event.target.textContent === correctAnswer) {
                         quizInstance.score++;
                     }
 
-                    quizInstance.currentIndex++;
-                    setNextQuiz(quizInstance);
+                    index++;
+                    setNextQuiz(quizInstance, index);
                 });
             });
         };
 
-        const makeAnswers = (quiz) => {
+        const makeAnswers = (quizInstance, index) => {
             const answers = [
-                quiz.correct_answer,
-                ...quiz.incorrect_answers
+                quizInstance.getCorrectAnswer(index),
+                ...quizInstance.getIncorrectAnswers(index)
             ];
 
             const shuffledAnswers = shuffle(answers);
